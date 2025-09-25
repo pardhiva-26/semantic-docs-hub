@@ -44,11 +44,16 @@ function mockEmbedding(dim = EMBEDDING_DIM) {
 
 router.post("/", async (req, res) => {
   try {
-    const { document_id, text } = req.body;
-    if (!text && !document_id)
+    const { document_id} = req.body;
+    if (!document_id)
       return res.status(400).json({ error: "text or document_id required" });
 
-    let sourceText = text;
+    const doc = await query(`SELECT text FROM documents WHERE id = $1`, [document_id]);
+    if (!doc) {
+      return res.status(404).json({ error: "Document not found" });
+    }
+
+    let sourceText = doc.text;
     if (!sourceText && document_id) {
       const docRes = await query(`SELECT text FROM documents WHERE id = $1`, [
         document_id,
